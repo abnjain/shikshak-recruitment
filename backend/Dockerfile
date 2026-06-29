@@ -24,8 +24,14 @@ COPY --from=builder /app/target/*.jar app.jar
 # Create uploads directory
 RUN mkdir -p /app/uploads && chown -R appuser:appgroup /app
 
+# Copy entrypoint script
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
 USER appuser
 
 EXPOSE 8080
+
+ENTRYPOINT ["/app/entrypoint.sh"]
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
