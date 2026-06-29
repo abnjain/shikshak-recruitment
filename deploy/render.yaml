@@ -44,7 +44,7 @@ services:
         fromService:
           type: web
           name: shikshak-backend
-          property: host
+          property: url
 
 databases:
   - name: shikshak-db
