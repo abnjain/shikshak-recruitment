@@ -10,9 +10,9 @@ spring:
   # Database Configuration (Default: PostgreSQL)
   # For MySQL, switch profiles to 'mysql'
   datasource:
-    url: jdbc:postgresql://localhost:5432/shikshak_recruitment
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:shikshak_recruitment}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 10

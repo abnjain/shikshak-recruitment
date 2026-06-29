@@ -10,10 +10,18 @@ services:
     envVars:
       - key: SERVER_PORT
         value: 8080
-      - key: SPRING_DATASOURCE_URL
+      - key: DB_HOST
         fromDatabase:
           name: shikshak-db
-          property: connectionString
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: shikshak-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: shikshak-db
+          property: databaseName
       - key: SPRING_DATASOURCE_USERNAME
         fromDatabase:
           name: shikshak-db
