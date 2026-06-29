@@ -1,0 +1,21 @@
+{
+  "composeFile": ["../docker-compose.yml"],
+  "databases": {
+    "postgres": {
+      "image": "postgres:16-alpine",
+      "volume": "postgres_data"
+    }
+  },
+  "services": {
+    "backend": {
+      "buildContext": "../backend",
+      "src": "../backend",
+      "port": 8080
+    },
+    "frontend": {
+      "buildContext": "../frontend",
+      "src": "../frontend",
+      "port": 80
+    }
+  }
+}

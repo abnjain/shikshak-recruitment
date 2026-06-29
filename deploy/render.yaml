@@ -1,0 +1,53 @@
+services:
+  # Backend API
+  - type: web
+    name: shikshak-backend
+    env: docker
+    repo: https://github.com/abnjain/shikshak-recruitment
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /api/v1/public/jobs
+    envVars:
+      - key: SERVER_PORT
+        value: 8080
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: shikshak-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: shikshak-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: shikshak-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+
+  # Frontend SPA
+  - type: web
+    name: shikshak-frontend
+    env: docker
+    repo: https://github.com/abnjain/shikshak-recruitment
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    healthCheckPath: /health
+    envVars:
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: shikshak-backend
+          property: host
+
+databases:
+  - name: shikshak-db
+    plan: free
+    databaseName: shikshak_recruitment
+    region: oregon

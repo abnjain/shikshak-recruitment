@@ -1,0 +1,67 @@
+[
+  {
+    "family": "shikshak-backend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "512",
+    "memory": "1024",
+    "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+      {
+        "name": "backend",
+        "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shikshak-backend:latest",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 8080, "protocol": "tcp" }
+        ],
+        "environment": [
+          { "name": "SERVER_PORT", "value": "8080" },
+          { "name": "SPRING_DATASOURCE_URL", "value": "jdbc:postgresql://YOUR_RDS_ENDPOINT:5432/shikshak_recruitment" },
+          { "name": "SPRING_DATASOURCE_USERNAME", "value": "postgres" },
+          { "name": "APP_JWT_EXPIRATION_MS", "value": "86400000" },
+          { "name": "APP_JWT_REFRESH_EXPIRATION_MS", "value": "604800000" },
+          { "name": "APP_UPLOAD_DIR", "value": "/app/uploads" }
+        ],
+        "secrets": [
+          { "name": "SPRING_DATASOURCE_PASSWORD", "valueFrom": "arn:aws:ssm:us-east-1:YOUR_ACCOUNT_ID:parameter/db-password" },
+          { "name": "APP_JWT_SECRET", "valueFrom": "arn:aws:ssm:us-east-1:YOUR_ACCOUNT_ID:parameter/jwt-secret" },
+          { "name": "APP_OAUTH_GOOGLE_CLIENT_ID", "valueFrom": "arn:aws:ssm:us-east-1:YOUR_ACCOUNT_ID:parameter/google-client-id" }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/shikshak-backend",
+            "awslogs-region": "us-east-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        }
+      }
+    ]
+  },
+  {
+    "family": "shikshak-frontend",
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": ["FARGATE"],
+    "cpu": "256",
+    "memory": "512",
+    "executionRoleArn": "arn:aws:iam::YOUR_ACCOUNT_ID:role/ecsTaskExecutionRole",
+    "containerDefinitions": [
+      {
+        "name": "frontend",
+        "image": "YOUR_ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/shikshak-frontend:latest",
+        "essential": true,
+        "portMappings": [
+          { "containerPort": 80, "protocol": "tcp" }
+        ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/ecs/shikshak-frontend",
+            "awslogs-region": "us-east-1",
+            "awslogs-stream-prefix": "ecs"
+          }
+        }
+      }
+    ]
+  }
+]

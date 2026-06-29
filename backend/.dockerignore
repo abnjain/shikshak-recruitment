@@ -1,0 +1,13 @@
+target/
+**/.git
+**/.gitignore
+**/.vscode
+**/.idea
+**/*.md
+**/.env
+**/.env.local
+**/application-local.yml
+**/application-dev.yml
+**/application-secret.yml
+**/logs
+node_modules/
