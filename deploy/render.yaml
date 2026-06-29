@@ -40,7 +40,7 @@ services:
     dockerContext: ./frontend
     healthCheckPath: /health
     envVars:
-      - key: VITE_API_BASE_URL
+      - key: BACKEND_URL
         fromService:
           type: web
           name: shikshak-backend

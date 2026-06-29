@@ -29,17 +29,17 @@ This guide covers all deployment options for the Shikshak Recruitment Portal, fr
 
 Before deploying, ensure you have the following installed and configured:
 
-| Tool         | Version   | Purpose                              |
-|--------------|-----------|--------------------------------------|
-| Docker       | 24+       | Containerization (all methods)       |
-| Docker Compose | 2.20+   | Local multi-service orchestration    |
-| Java         | 17+       | Backend compilation (manual deploy)  |
-| Maven        | 3.8+      | Backend build (manual deploy)        |
-| Node.js      | 18+       | Frontend build (manual deploy)       |
-| npm/yarn     | 9+        | Frontend dependencies (manual)       |
-| kubectl      | 1.28+     | Kubernetes management                |
-| AWS CLI      | 2.x       | AWS ECS/ECR deployment               |
-| gcloud CLI   | Latest    | GCP Cloud Run/SQL deployment         |
+| Tool            | Version   | Purpose                              |
+|-----------------|-----------|--------------------------------------|
+| Docker          | 24+       | Containerization (all methods)       |
+| Docker Compose  | 2.20+     | Local multi-service orchestration    |
+| Java            | 17+       | Backend compilation (manual deploy)  |
+| Maven           | 3.8+      | Backend build (manual deploy)        |
+| Node.js         | 18+       | Frontend build (manual deploy)       |
+| npm/yarn        | 9+        | Frontend dependencies (manual)       |
+| kubectl         | 1.28+     | Kubernetes management                |
+| AWS CLI         | 2.x       | AWS ECS/ECR deployment               |
+| gcloud CLI      | Latest    | GCP Cloud Run/SQL deployment         |
 
 ---
 
@@ -517,31 +517,161 @@ Refer to `deploy/railway.json` for the Railway configuration.
 
 Best for: Simple deployments with built-in PostgreSQL
 
-#### Step 1: Fork or Connect Repository
+This is the recommended method for quickly deploying Shikshak Recruitment to production. Render handles PostgreSQL provisioning, SSL certificates, and CI/CD automatically.
 
-1. Log in to [Render Dashboard](https://dashboard.render.com/)
-2. Click **New +** > **Blueprint**
-3. Connect your GitHub repository
-4. Render will automatically read `deploy/render.yaml`
+#### Prerequisites
 
-#### Step 2: Configure Environment Variables
+- A [Render account](https://dashboard.render.com/) (free tier works for small deployments)
+- Your project pushed to a GitHub repository
+- A JWT secret generated (see [Generating a JWT Secret](#generating-a-jwt-secret))
 
-In the Render dashboard, set the following environment variables (marked as `sync: false` in the blueprint):
+#### Step 1: Generate Required Secrets
 
-- `JWT_SECRET`: Your generated JWT secret
-- `GOOGLE_CLIENT_ID`: Google OAuth client ID (if using)
-- `MAIL_USERNAME`: Gmail address (if using email)
-- `MAIL_PASSWORD`: Gmail app password (if using email)
+```bash
+# Generate a JWT secret
+JWT_SECRET=$(openssl rand -base64 32)
+echo "JWT_SECRET=$JWT_SECRET"
 
-#### Step 3: Deploy
+# Generate a strong DB password
+DB_PASSWORD="$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 20)"
+echo "DB_PASSWORD=$DB_PASSWORD"
+```
 
-Render will automatically:
-1. Provision a PostgreSQL database
-2. Build and deploy the backend service
-3. Build and deploy the frontend service
-4. Set up the database connection between services
+Save both values -- you will need them in Step 4.
 
-The blueprint configuration is in `deploy/render.yaml`.
+#### Step 2: Prepare the render.yaml File
+
+The blueprint file is at `deploy/render.yaml`. It is pre-configured to:
+
+- Build the **backend** (`shikshak-backend`) from `./backend/Dockerfile`
+- Build the **frontend** (`shikshak-frontend`) from `./frontend/Dockerfile`
+- Provision a **PostgreSQL database** (`shikshak-db`)
+- Auto-link the database credentials to the backend via `fromDatabase` references
+- Auto-link the backend URL to the frontend via `fromService` references
+
+**No changes are needed to `render.yaml` for a basic deployment.** The file is already committed to your repository.
+
+If you are deploying from a branch other than `main`, add `branch: <your-branch>` under both services and the database:
+
+```yaml
+services:
+  - type: web
+    name: shikshak-backend
+    branch: main          # <-- change to your branch
+    ...
+  - type: web
+    name: shikshak-frontend
+    branch: main          # <-- change to your branch
+    ...
+databases:
+  - name: shikshak-db
+    branch: main          # <-- change to your branch
+    ...
+```
+
+#### Step 3: Connect Repository to Render
+
+1. Log in to the [Render Dashboard](https://dashboard.render.com/)
+2. Click the **New +** button (top-right) and select **Blueprint**
+3. If prompted, connect your GitHub account and grant Render access to your repository
+4. Select your `abnjain/shikshak-recruitment` repository
+5. Render will automatically read `deploy/render.yaml` and display:
+   - **shikshak-backend** (Web Service, Docker)
+   - **shikshak-frontend** (Web Service, Docker)
+   - **shikshak-db** (PostgreSQL database)
+6. Click **Apply** at the bottom
+
+#### Step 4: Configure Environment Variables
+
+After clicking Apply, Render will prompt you for environment variables marked as `sync: false`.
+
+1. For the **backend service**, set these values:
+
+   | Variable           | Value                                  | Required? |
+   |--------------------|----------------------------------------|-----------|
+   | `JWT_SECRET`       | Your generated JWT secret              | Yes       |
+   | `GOOGLE_CLIENT_ID` | Your Google OAuth client ID            | No        |
+   | `MAIL_USERNAME`    | your-email@gmail.com                   | No        |
+   | `MAIL_PASSWORD`    | Your Gmail app password                | No        |
+
+2. For the **frontend service**, no additional variables are needed -- it will automatically receive `BACKEND_URL` from the backend service.
+
+3. The **database** credentials will be auto-generated and injected into the backend.
+
+#### Step 5: Deploy
+
+1. Review the configuration summary and click **Apply**
+2. Render will now:
+   - Provision a PostgreSQL 16 database (free tier: `plan: free`, 256MB RAM, 1GB disk)
+   - Build the backend Docker image (this takes 3-5 minutes on first deploy)
+   - Build the frontend Docker image
+   - Deploy both services and run health checks
+3. You can monitor progress in the Render Dashboard under the **Events** tab for each service
+
+#### Step 6: Access Your Application
+
+Once both services show **Live** status:
+
+```bash
+# Backend API (check if it responds)
+curl https://shikshak-backend.onrender.com/api/v1/public/jobs
+
+# Frontend website
+# Open https://shikshak-frontend.onrender.com in your browser
+```
+
+> Note: Render assigns a subdomain like `shikshak-backend.onrender.com` and `shikshak-frontend.onrender.com` by default. You can add a custom domain in the Render dashboard later.
+
+#### Step 7: Verify the Deployment
+
+Run these checks:
+
+```bash
+# 1. Check backend health
+curl -I https://shikshak-backend.onrender.com/api/v1/public/jobs
+# Expected: HTTP/2 200
+
+# 2. Login as admin
+curl -X POST https://shikshak-backend.onrender.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"usernameOrEmail":"admin","password":"admin123"}'
+# Expected: JSON response with token and user data
+
+# 3. Check frontend loads
+curl -I https://shikshak-frontend.onrender.com/health
+# Expected: 200 OK
+```
+
+#### Setting Up a Custom Domain (Optional)
+
+1. In the Render Dashboard, go to your **frontend service** > **Settings** > **Custom Domain**
+2. Enter your domain (e.g., `shikshak.abnjain.me`)
+3. Add the DNS CNAME record provided by Render to your domain registrar
+4. Render will automatically provision an SSL certificate (Let's Encrypt)
+5. Repeat for the backend service if needed (e.g., `api.shikshak.abnjain.me`)
+
+#### Auto-Deploy on Git Push
+
+Render automatically deploys new changes when you push to the connected branch. To disable this, set `autoDeploy: false` in `render.yaml`.
+
+To manually trigger a redeploy:
+
+```bash
+curl -X POST "https://api.render.com/v1/services/<service-id>/deploys" \
+  -H "Authorization: Bearer <render-api-key>" \
+  -H "Content-Type: application/json" \
+  -d '{}'
+```
+
+You can find the service ID and API key in the Render Dashboard under **Account Settings** > **API Keys**.
+
+#### Render-Specific Notes
+
+- **Free tier limits**: The free PostgreSQL database has 256MB RAM and 1GB storage. It will suspend after 15 minutes of inactivity. The web services also spin down after inactivity. Consider upgrading to a paid plan for production.
+- **No persistent disk**: File uploads are stored on the ephemeral container filesystem. They will be lost on restart. For production, configure cloud storage (S3, GCS) for uploads.
+- **Health checks**: The backend uses `/api/v1/public/jobs` as the health check path. The frontend uses `/health`. These must return a 200 status for the services to stay live.
+- **Logs**: View logs in the Render Dashboard under each service's **Logs** tab.
+- **Environment variables**: Changes to env vars trigger an automatic redeploy on Render.
 
 ---
 
