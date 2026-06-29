@@ -7,6 +7,7 @@ import com.google.api.client.json.gson.GsonFactory;
 import com.shikshak.recruitment.common.BadRequestException;
 import com.shikshak.recruitment.common.DuplicateResourceException;
 import com.shikshak.recruitment.common.ResourceNotFoundException;
+import com.shikshak.recruitment.common.UnauthorizedException;
 import com.shikshak.recruitment.dto.request.GoogleLoginRequest;
 import com.shikshak.recruitment.dto.request.LoginRequest;
 import com.shikshak.recruitment.dto.request.SignupRequest;
@@ -118,19 +119,23 @@ public class AuthService {
                 candidateProfileRepository.save(profile);
             }
 
-            // Generate JWT for the user
-            String jwt = jwtUtil.generateToken(user.getUsername());
+            // Generate access + refresh tokens
+            String accessToken = jwtUtil.generateToken(user.getUsername(), user.getFirstName(), user.getLastName());
+            String refreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getFirstName(), user.getLastName());
 
             List<String> roles = user.getRoles().stream()
                     .map(role -> role.getName().name())
                     .collect(Collectors.toList());
 
             return JwtResponse.builder()
-                    .token(jwt)
+                    .token(accessToken)
+                    .refreshToken(refreshToken)
                     .type("Bearer")
                     .id(user.getId())
                     .username(user.getUsername())
                     .email(user.getEmail())
+                    .firstName(user.getFirstName())
+                    .lastName(user.getLastName())
                     .roles(roles)
                     .build();
         } catch (BadRequestException e) {
@@ -147,21 +152,26 @@ public class AuthService {
         );
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtil.generateToken(authentication.getName());
 
         User user = userRepository.findByUsernameOrEmail(request.getUsernameOrEmail(), request.getUsernameOrEmail())
                 .orElseThrow(() -> new ResourceNotFoundException("User", "credentials", request.getUsernameOrEmail()));
+
+        String accessToken = jwtUtil.generateToken(authentication.getName(), user.getFirstName(), user.getLastName());
+        String refreshToken = jwtUtil.generateRefreshToken(authentication.getName(), user.getFirstName(), user.getLastName());
 
         List<String> roles = user.getRoles().stream()
                 .map(role -> role.getName().name())
                 .collect(Collectors.toList());
 
         return JwtResponse.builder()
-                .token(jwt)
+                .token(accessToken)
+                .refreshToken(refreshToken)
                 .type("Bearer")
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
                 .roles(roles)
                 .build();
     }
@@ -229,6 +239,42 @@ public class AuthService {
         }
 
         return userMapper.toResponse(user);
+    }
+
+    /**
+     * Validate a refresh token and issue a new access token.
+     */
+    public JwtResponse refreshAccessToken(String refreshToken) {
+        if (refreshToken == null || !jwtUtil.validateToken(refreshToken)) {
+            throw new UnauthorizedException("Invalid or expired refresh token");
+        }
+
+        String username = jwtUtil.getUsernameFromToken(refreshToken);
+        User user = userRepository.findByUsernameOrEmail(username, username)
+                .orElseThrow(() -> new UnauthorizedException("User not found for refresh token"));
+
+        if (!user.isActive()) {
+            throw new UnauthorizedException("Account is disabled");
+        }
+
+        String newAccessToken = jwtUtil.generateToken(user.getUsername(), user.getFirstName(), user.getLastName());
+        String newRefreshToken = jwtUtil.generateRefreshToken(user.getUsername(), user.getFirstName(), user.getLastName());
+
+        List<String> roles = user.getRoles().stream()
+                .map(role -> role.getName().name())
+                .collect(Collectors.toList());
+
+        return JwtResponse.builder()
+                .token(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .type("Bearer")
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .roles(roles)
+                .build();
     }
 
     public boolean existsByUsername(String username) {
