@@ -1,32 +1,35 @@
-# 🎓 Shikshak Recruitment Portal
+# Shikshak Recruitment Portal
 
-A modern, full-stack web application for teacher recruitment — connecting **Teachers/Candidates**, **Educational Institutes**, **Recruiters**, and **Platform Administrators** in a unified hiring marketplace.
+A modern, full-stack web application for teacher recruitment - connecting Teachers/Candidates, Educational Institutes, Recruiters, and Platform Administrators in a unified hiring marketplace.
 
-> **Shikshak** (शिक्षक) means "Teacher" in Sanskrit/Hindi.
-
----
-
-## 📋 Table of Contents
-
-- [Overview](#-overview)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Features](#-features)
-- [Role-Based Dashboards](#-role-based-dashboards)
-- [Project Structure](#-project-structure)
-- [Database Setup](#-database-setup)
-- [How to Run Backend](#-how-to-run-backend)
-- [How to Run Frontend](#-how-to-run-frontend)
-- [API Testing](#-api-testing)
-- [Sample Credentials](#-sample-credentials)
-- [API Endpoints](#-api-endpoints)
-- [Design Patterns Used](#-design-patterns-used)
-- [Security](#-security)
-- [Future Scope](#-future-scope)
+> Shikshak (शिक्षक) means "Teacher" in Hindi.
 
 ---
 
-## 🌟 Overview
+## Table of Contents
+
+- [Overview](#overview)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Features](#features)
+- [Role-Based Dashboards](#role-based-dashboards)
+- [Project Structure](#project-structure)
+- [Database Setup](#database-setup)
+- [How to Run Backend](#how-to-run-backend)
+- [How to Run Frontend](#how-to-run-frontend)
+- [API Testing](#api-testing)
+- [Sample Credentials](#sample-credentials)
+- [API Endpoints](#api-endpoints)
+- [Design Patterns Used](#design-patterns-used)
+- [Security](#security)
+- [Environment Variables](#environment-variables)
+- [Deployment](#deployment)
+- [Future Scope](#future-scope)
+- [License](#license)
+
+---
+
+## Overview
 
 Shikshak Recruitment Portal is a purpose-built platform for the education sector. It enables:
 
@@ -37,42 +40,43 @@ Shikshak Recruitment Portal is a purpose-built platform for the education sector
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
 ### Backend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Java | 17+ | Core language |
-| Spring Boot | 3.2.0 | Application framework |
-| Spring Security | 6.x | Authentication & authorization |
-| Spring Data JPA | 3.x | Database ORM |
-| Hibernate | 6.x | JPA implementation |
-| JWT (jjwt) | 0.12.3 | Token-based authentication |
-| MapStruct | 1.5.5 | DTO mapping |
-| Lombok | Latest | Boilerplate reduction |
-| PostgreSQL / MySQL | - | Database (switchable profiles) |
-| OpenCSV | 5.9 | CSV export support |
-| Maven | 3.8+ | Build & dependency management |
+| Technology       | Version | Purpose                           |
+|------------------|---------|-----------------------------------|
+| Java             | 17+     | Core language                     |
+| Spring Boot      | 3.2.0   | Application framework             |
+| Spring Security  | 6.x     | Authentication & authorization    |
+| Spring Data JPA  | 3.x     | Database ORM                      |
+| Hibernate        | 6.x     | JPA implementation                |
+| JWT (jjwt)       | 0.12.3  | Token-based authentication        |
+| MapStruct        | 1.5.5   | DTO mapping                       |
+| Lombok           | Latest  | Boilerplate reduction             |
+| PostgreSQL/MySQL | -       | Database (switchable profiles)    |
+| OpenCSV          | 5.9     | CSV export support                |
+| Maven            | 3.8+    | Build & dependency management     |
 
 ### Frontend
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 18.3+ | UI library |
-| TypeScript | 5.5+ | Type safety |
-| Vite | 5.4+ | Build tool & dev server |
-| Tailwind CSS | 3.4+ | Utility-first CSS |
-| React Router | 6.26+ | Client-side routing |
-| Axios | 1.7+ | HTTP client |
-| Recharts | 2.12+ | Data visualization |
-| React Hook Form + Zod | Latest | Form validation |
-| Lucide React | Latest | Icons |
-| React Hot Toast | Latest | Notifications |
+| Technology            | Version | Purpose                          |
+|-----------------------|---------|----------------------------------|
+| React                 | 18.3+   | UI library                       |
+| TypeScript            | 5.5+    | Type safety                      |
+| Vite                  | 5.4+    | Build tool & dev server          |
+| Tailwind CSS          | 3.4+    | Utility-first CSS                |
+| React Router          | 6.26+   | Client-side routing              |
+| Axios                 | 1.7+    | HTTP client                      |
+| Recharts              | 2.12+   | Data visualization               |
+| React Hook Form + Zod | Latest  | Form validation                  |
+| Lucide React          | Latest  | Icons                            |
+| React Hot Toast       | Latest  | Notifications                    |
+| date-fns              | 3.6+    | Date utilities                   |
 
 ---
 
-## 🏗 Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -115,19 +119,22 @@ Controller → Service → Repository → Database
 
 ---
 
-## ✨ Features
+## Features
 
 ### Authentication & Authorization
-- JWT-based authentication (access tokens)
-- Role-based access control with `@PreAuthorize`
+- JWT-based authentication (access + refresh tokens)
+- Role-based access control with @PreAuthorize
 - BCrypt password encryption
 - Registration with role selection (Candidate, Institute, Recruiter)
 - Email/username login
+- Access token stored in-memory; refresh token in httpOnly cookie
+- Token refresh with automatic retry of queued requests
 
 ### User Management
 - Profile creation and management
 - Role-based dashboards
 - Account activation/deactivation by admin
+- Email verification status tracking
 
 ### Job Management
 - Create, update, delete, and manage job listings
@@ -135,12 +142,14 @@ Controller → Service → Repository → Database
 - Job status workflow (Draft → Active → Closed/Expired)
 - Search & filter jobs by title, location, subject, experience, employment type
 - Remote job support
+- Pagination support
 
 ### Application Management
 - Apply to jobs with optional cover letter and resume
 - Track application status through hiring stages
 - Recruiter review and status update workflow
 - Duplicate application prevention
+- Custom hiring stages per job
 
 ### Resume Builder
 - Create and manage multiple resumes
@@ -148,13 +157,8 @@ Controller → Service → Repository → Database
 - Set primary resume
 - Multiple template support
 
-### Hiring Workflow
-- Custom hiring stages per job
-- Move candidates through stages
-- Track progress of each candidate
-
 ### Dashboard & Analytics
-- **Admin**: System-wide stats, user distribution, monthly trends
+- **Admin**: System-wide stats, user distribution, monthly trends (bar/line/pie charts)
 - **Institute**: Job posting stats, application overview
 - **Recruiter**: Assigned jobs, review metrics
 - **Candidate**: Application tracking, active job counts
@@ -164,21 +168,31 @@ Controller → Service → Repository → Database
 - Filter by location, subject, experience, employment type
 - Pagination support
 
+### Email & Notifications
+- Spring Mail integration for email notifications
+- Gmail SMTP support (app password)
+- Async email sending with @Async
+
+### File Uploads
+- Multipart file upload support (10MB max)
+- Resume/CV upload
+- Configurable upload directory
+
 ---
 
-## 👥 Role-Based Dashboards
+## Role-Based Dashboards
 
 ### Admin Dashboard
 - System-wide statistics (users, jobs, applications)
 - User management (view, activate/deactivate)
-- Institute verification
+- Institute verification workflows
 - View all jobs and applications
-- Charts: Application status distribution, monthly trends
+- Charts: Application status distribution, monthly registration trends, user role distribution
 
 ### Institute Dashboard
-- Profile management
+- Profile management with institute details
 - Post and manage job listings
-- View applications received
+- View applications received for institute jobs
 - Track job posting statistics
 
 ### Recruiter Dashboard
@@ -189,97 +203,140 @@ Controller → Service → Repository → Database
 
 ### Candidate Dashboard
 - Browse and search jobs
-- Apply to positions
-- Track application status
-- Build and manage resumes
+- Apply to positions with optional resume
+- Track application status across stages
+- Build and manage multiple resumes
 - Update profile with skills, experience, qualifications
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 ShikshakRecruitment/
 ├── backend/
 │   ├── pom.xml
-│   ├── src/main/java/com/shikshak/recruitment/
-│   │   ├── ShikshakRecruitmentApplication.java
-│   │   ├── config/
-│   │   │   ├── SecurityConfig.java
-│   │   │   ├── CorsConfig.java
-│   │   │   ├── AsyncConfig.java
-│   │   │   └── DataSeeder.java
-│   │   ├── common/
-│   │   │   ├── ApiResponse.java
-│   │   │   ├── GlobalExceptionHandler.java
-│   │   │   ├── ResourceNotFoundException.java
-│   │   │   ├── BadRequestException.java
-│   │   │   ├── UnauthorizedException.java
-│   │   │   └── DuplicateResourceException.java
-│   │   ├── enums/
-│   │   │   ├── ERole.java
-│   │   │   ├── JobStatus.java
-│   │   │   ├── ApplicationStatus.java
-│   │   │   ├── Gender.java
-│   │   │   ├── Qualification.java
-│   │   │   └── EmploymentType.java
-│   │   ├── entity/
-│   │   │   ├── User.java
-│   │   │   ├── Role.java
-│   │   │   ├── Institute.java
-│   │   │   ├── Job.java
-│   │   │   ├── CandidateProfile.java
-│   │   │   ├── Application.java
-│   │   │   ├── HiringStage.java
-│   │   │   ├── Resume.java
-│   │   │   └── PasswordResetToken.java
-│   │   ├── dto/
-│   │   │   ├── request/ (LoginRequest, SignupRequest, JobRequest,
-│   │   │   │             ApplicationRequest, ProfileUpdateRequest,
-│   │   │   │             ResumeRequest, HiringStageRequest,
-│   │   │   │             UpdateApplicationStatusRequest)
-│   │   │   └── response/ (JwtResponse, UserResponse, JobResponse,
-│   │   │                  InstituteResponse, ApplicationResponse,
-│   │   │                  CandidateProfileResponse, ResumeResponse,
-│   │   │                  HiringStageResponse, DashboardStatsResponse,
-│   │   │                  PagedResponse)
-│   │   ├── repository/ (8 JPA repositories)
-│   │   ├── mapper/ (6 MapStruct mappers)
-│   │   ├── security/
-│   │   │   ├── JwtUtil.java
-│   │   │   ├── JwtAuthFilter.java
-│   │   │   └── CustomUserDetailsService.java
-│   │   ├── service/ (8 services)
-│   │   └── controller/ (9 REST controllers)
+│   ├── Dockerfile
+│   └── src/main/java/com/shikshak/recruitment/
+│       ├── ShikshakRecruitmentApplication.java
+│       ├── config/
+│       │   ├── SecurityConfig.java          # Spring Security + JWT config
+│       │   ├── CorsConfig.java              # CORS configuration
+│       │   ├── AsyncConfig.java             # Async task executor
+│       │   └── DataSeeder.java             # Seeds roles + admin user
+│       ├── common/
+│       │   ├── ApiResponse.java             # Standardized API response wrapper
+│       │   ├── GlobalExceptionHandler.java  # @RestControllerAdvice
+│       │   ├── ResourceNotFoundException.java
+│       │   ├── BadRequestException.java
+│       │   ├── UnauthorizedException.java
+│       │   └── DuplicateResourceException.java
+│       ├── enums/
+│       │   ├── ERole.java                   # ADMIN, INSTITUTE, RECRUITER, CANDIDATE
+│       │   ├── JobStatus.java               # DRAFT, ACTIVE, CLOSED, EXPIRED
+│       │   ├── ApplicationStatus.java       # PENDING, SHORTLISTED, etc.
+│       │   ├── Gender.java
+│       │   ├── Qualification.java
+│       │   └── EmploymentType.java
+│       ├── entity/
+│       │   ├── User.java                    # Core user with roles
+│       │   ├── Role.java                    # Role entity
+│       │   ├── Institute.java               # Institute profile
+│       │   ├── Job.java                     # Job listing
+│       │   ├── CandidateProfile.java        # Candidate details
+│       │   ├── Application.java             # Job application
+│       │   ├── HiringStage.java             # Custom hiring stages
+│       │   ├── Resume.java                  # Candidate resume
+│       │   └── PasswordResetToken.java      # Password reset flow
+│       ├── dto/
+│       │   ├── request/                     # LoginRequest, SignupRequest, JobRequest,
+│       │   │                                # ApplicationRequest, ProfileUpdateRequest,
+│       │   │                                # ResumeRequest, HiringStageRequest, etc.
+│       │   └── response/                    # JwtResponse, UserResponse, JobResponse,
+│       │                                    # PagedResponse, DashboardStatsResponse, etc.
+│       ├── repository/                      # 8 Spring Data JPA repositories
+│       ├── mapper/                          # 6 MapStruct mappers
+│       ├── security/
+│       │   ├── JwtUtil.java                 # JWT generation & validation
+│       │   ├── JwtAuthFilter.java           # OncePerRequestFilter
+│       │   └── CustomUserDetailsService.java
+│       ├── service/                         # 8 service classes
+│       └── controller/                      # 9 REST controllers
 │   └── src/main/resources/
-│       └── application.yml
+│       └── application.yml                  # Database, JWT, mail config
 ├── frontend/
 │   ├── package.json
-│   ├── vite.config.ts
+│   ├── vite.config.ts                       # Dev proxy to backend
 │   ├── tailwind.config.js
 │   ├── tsconfig.json
 │   ├── index.html
+│   ├── Dockerfile                           # Multi-stage: Node build -> nginx serve
+│   ├── nginx.conf                           # SPA + API proxy config
 │   └── src/
 │       ├── main.tsx
 │       ├── App.tsx
-│       ├── index.css
-│       ├── types/index.ts
-│       ├── api/ (6 API modules)
-│       ├── contexts/AuthContext.tsx
-│       ├── layouts/ (MainLayout, AuthLayout)
-│       ├── components/ (StatCard, DataTable, StatusBadge, LoadingSpinner)
+│       ├── index.css                        # Tailwind base styles + theme
+│       ├── theme/
+│       │   ├── theme.css                    # Custom CSS variables
+│       │   └── theme.ts                     # Theme constants
+│       ├── types/index.ts                   # Shared TypeScript types
+│       ├── api/
+│       │   ├── axios.ts                     # Axios instance with interceptors
+│       │   ├── tokenManager.ts              # In-memory token store + refresh logic
+│       │   ├── authApi.ts                   # Login, register, refresh
+│       │   ├── jobApi.ts                    # Job CRUD, search
+│       │   ├── applicationApi.ts            # Application management
+│       │   ├── dashboardApi.ts              # Dashboard stats
+│       │   ├── profileApi.ts                # Profile management
+│       │   ├── resumeApi.ts                 # Resume CRUD
+│       │   └── publicApi.ts                 # Public endpoints
+│       ├── contexts/AuthContext.tsx          # Auth state provider
+│       ├── layouts/
+│       │   ├── MainLayout.tsx               # Sidebar + header layout
+│       │   └── AuthLayout.tsx               # Centered auth card layout
+│       ├── components/
+│       │   ├── StatCard.tsx                 # Dashboard stat card
+│       │   ├── DataTable.tsx                # Reusable data table
+│       │   ├── StatusBadge.tsx              # Status indicator badge
+│       │   └── LoadingSpinner.tsx           # Loading state
 │       └── pages/
-│           ├── auth/ (Login, Register)
-│           ├── admin/ (Dashboard, Users, Institutes, Jobs)
-│           ├── institute/ (Dashboard, Jobs, Applications, Profile)
-│           ├── recruiter/ (Dashboard, Jobs, Applications)
-│           └── candidate/ (Dashboard, Jobs, Applications, Resumes, Profile)
+│           ├── HomePage.tsx                 # Landing page
+│           ├── auth/
+│           │   ├── LoginPage.tsx
+│           │   └── RegisterPage.tsx
+│           ├── admin/
+│           │   ├── AdminDashboard.tsx        # Charts + stats
+│           │   ├── AdminUsers.tsx            # User management
+│           │   ├── AdminInstitutes.tsx        # Institute verification
+│           │   └── AdminJobs.tsx             # All jobs view
+│           ├── institute/
+│           │   ├── InstituteDashboard.tsx
+│           │   ├── InstituteJobs.tsx
+│           │   ├── InstituteApplications.tsx
+│           │   └── InstituteProfile.tsx
+│           ├── recruiter/
+│           │   ├── RecruiterDashboard.tsx
+│           │   ├── RecruiterJobs.tsx
+│           │   └── RecruiterApplications.tsx
+│           └── candidate/
+│               ├── CandidateDashboard.tsx
+│               ├── CandidateJobs.tsx
+│               ├── CandidateApplications.tsx
+│               ├── CandidateProfile.tsx
+│               └── CandidateResumes.tsx
+├── deploy/
+│   ├── k8s/                                 # Kubernetes manifests
+│   ├── scripts/                             # Deployment scripts
+│   ├── railway.json                         # Railway config
+│   └── render.yaml                          # Render blueprint
+├── docker-compose.yml                       # Full-stack Docker Compose
+├── deployment-guide.md                      # Complete deployment guide
 └── README.md
 ```
 
 ---
 
-## 🗄 Database Setup
+## Database Setup
 
 ### Option 1: PostgreSQL (Recommended)
 
@@ -330,11 +387,18 @@ spring:
       ddl-auto: update  # Auto-creates tables on startup
 ```
 
-> **Note:** `ddl-auto: update` will automatically create/update tables. Change to `validate` or `none` in production.
+> Note: `ddl-auto: update` will automatically create/update tables. Change to `validate` or `none` in production.
+
+### Using Docker (Alternative)
+
+```bash
+# Start only the database
+docker compose up -d postgres
+```
 
 ---
 
-## 🚀 How to Run Backend
+## How to Run Backend
 
 ### Prerequisites
 - Java 17 or higher
@@ -345,7 +409,7 @@ spring:
 
 ```bash
 # 1. Navigate to backend directory
-cd ShikshakRecruitment/backend
+cd backend
 
 # 2. Build the project
 ./mvnw clean install -DskipTests
@@ -367,9 +431,19 @@ http://localhost:8080/api/v1
 java -jar target/recruitment-1.0.0.jar
 ```
 
+### Run with Docker
+
+```bash
+# Build backend image
+docker build -t shikshak-backend ./backend
+
+# Run with network to connect to database
+docker run -p 8080:8080 --network host shikshak-backend
+```
+
 ---
 
-## 🖥 How to Run Frontend
+## How to Run Frontend
 
 ### Prerequisites
 - Node.js 18+
@@ -379,17 +453,19 @@ java -jar target/recruitment-1.0.0.jar
 
 ```bash
 # 1. Navigate to frontend directory
-cd ShikshakRecruitment/frontend
+cd frontend
 
 # 2. Install dependencies
 npm install
 
-# 3. Start development server
+# 3. Start development server (proxies /api to backend)
 npm run dev
 
 # 4. The app will open at:
 http://localhost:5173
 ```
+
+The Vite dev server is configured to proxy `/api` requests to `http://localhost:8080` (see `vite.config.ts`). No CORS issues in development.
 
 ### Build for Production
 
@@ -398,9 +474,28 @@ npm run build
 # Output in: frontend/dist/
 ```
 
+### Production Preview
+
+```bash
+npm run preview
+```
+
 ---
 
-## 🧪 API Testing
+## Full-Stack with Docker Compose
+
+```bash
+# Start all services (PostgreSQL, Backend, Frontend)
+docker compose up -d --build
+
+# Access the application
+# Frontend: http://localhost
+# Backend:  http://localhost/api/v1
+```
+
+---
+
+## API Testing
 
 The backend seeds an admin user on startup. You can test APIs using **cURL**, **Postman**, or any HTTP client.
 
@@ -471,7 +566,7 @@ curl "http://localhost:8080/api/v1/jobs/search?subject=Mathematics&location=Mumb
 
 ---
 
-## 👤 Sample Credentials
+## Sample Credentials
 
 The application seeds default users on first startup:
 
@@ -489,18 +584,30 @@ Register additional users via the `/api/v1/auth/register` endpoint or the fronte
 
 ---
 
-## 📡 API Endpoints
+## API Endpoints
+
+All endpoints are prefixed with `/api/v1`.
 
 ### Auth Endpoints
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/auth/login` | No | Login with username/email & password |
+| POST | `/auth/login` | No | Login with username/email |
 | POST | `/auth/register` | No | Register new user |
+| POST | `/auth/refresh` | Cookie | Refresh access token |
 | GET | `/auth/check-username` | No | Check username availability |
 | GET | `/auth/check-email` | No | Check email availability |
 
 ### User Endpoints
+
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| GET | `/users/me` | JWT | Get current user profile |
+| GET | `/users/{id}` | Admin | Get user by ID |
+| GET | `/users` | Admin | Get all users |
+| PUT | `/users/{id}/toggle-active` | Admin | Activate/deactivate user |
+
+### Job Endpoints
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
@@ -587,7 +694,7 @@ Register additional users via the `/api/v1/auth/register` endpoint or the fronte
 
 ---
 
-## 🧩 Design Patterns Used
+## Design Patterns Used
 
 | Pattern | Usage |
 |---------|-------|
@@ -608,71 +715,95 @@ Register additional users via the `/api/v1/auth/register` endpoint or the fronte
 
 ---
 
-## 🔒 Security
+## Security
 
 ### JWT Authentication Flow
 
 ```
 Client                    Server
-  │                        │
-  │── POST /auth/login ────│─▶ Authenticate
-  │                        │─▶ Generate JWT
-  │◀── { token, user } ───│
-  │                        │
-  │── GET /api/resource ───│─▶ Extract JWT from header
-  │   Authorization:       │─▶ Validate token
-  │   Bearer <token>      │─▶ Load user details
-  │                        │─▶ Check authorization
-  │◀── Response ──────────│
+  |                        |
+  |-- POST /auth/login ----|-> Authenticate
+  |                        |-> Generate JWT (access + refresh)
+  |<-- { token, user } ----|
+  |                        |
+  |-- GET /api/resource ---|-> Extract JWT from header
+  |   Authorization:       |-> Validate token
+  |   Bearer <token>      |-> Load user details
+  |                        |-> Check authorization (@PreAuthorize)
+  |<-- Response ----------|
 ```
 
 ### Security Features
 - **Password Encryption**: BCrypt with configurable strength
-- **JWT Tokens**: 24-hour expiry, signed with HMAC-SHA256
-- **Role-Based Access**: `@PreAuthorize` annotations on controllers
-- **CORS**: Configured for frontend origins
+- **JWT Tokens**: Access token (24h) + Refresh token (7d in httpOnly cookie)
+- **Access Token Storage**: In-memory only (never localStorage) for XSS protection
+- **Refresh Token**: httpOnly cookie, not accessible from JavaScript
+- **Token Refresh**: Automatic silent refresh on 401 with request queuing
+- **Role-Based Access**: @PreAuthorize annotations on controllers
+- **CORS**: Configured for frontend origins (localhost:5173, localhost:3000)
 - **Stateless Sessions**: No HTTP session, JWT only
 - **Input Validation**: Jakarta Bean Validation
 - **SQL Injection Protection**: JPA parameterized queries
 
-### Security Configuration
+---
 
-```yaml
-app:
-  jwt:
-    secret: <base64-encoded-secret>
-    expiration-ms: 86400000  # 24 hours
-```
+## Environment Variables
+
+| Variable           | Description                        | Default                        |
+|--------------------|------------------------------------|--------------------------------|
+| `JWT_SECRET`       | HMAC-SHA256 key (Base64-encoded)   | See application.yml           |
+| `GOOGLE_CLIENT_ID` | Google OAuth client ID             | -                             |
+| `MAIL_USERNAME`    | SMTP email username                | your-email@gmail.com          |
+| `MAIL_PASSWORD`    | SMTP email app password            | your-app-password             |
+| `UPLOAD_DIR`       | File upload directory              | ./uploads                     |
+| `DB_USER`          | Database username                  | postgres                      |
+| `DB_PASSWORD`      | Database password                  | postgres                      |
 
 ---
 
-## 📈 Future Scope
+## Deployment
 
-- [ ] **Email Notifications**: Send email alerts for application updates, new jobs, etc.
-- [ ] **File Upload**: Resume/CV upload using cloud storage (AWS S3, Azure Blob)
-- [ ] **Real-time Chat**: Messaging between candidates and recruiters
-- [ ] **Video Interview**: Integrated video interview scheduling
-- [ ] **Assessment Engine**: Online teaching aptitude tests
-- [ ] **AI Resume Parsing**: Extract skills and experience from uploaded resumes
-- [ ] **Advanced Analytics**: ML-powered insights, hiring predictions
-- [ ] **Multi-language Support**: i18n for Hindi, English, and regional languages
-- [ ] **Mobile App**: React Native companion app
-- [ ] **Payment Gateway**: Premium job listings, featured posts
-- [ ] **Notification System**: In-app + email + SMS notifications
-- [ ] **Audit Logging**: Track all user activities for compliance
-- [ ] **Docker Support**: Containerized deployment with docker-compose
-- [ ] **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
-- [ ] **OAuth2.0**: Social login (Google, LinkedIn)
+The project supports multiple deployment targets. See the full deployment guide at `deployment-guide.md`.
+
+### Quick Deploy Options
+
+| Method          | Description                          | Command/File                      |
+|-----------------|--------------------------------------|-----------------------------------|
+| Docker Compose  | Self-hosted on any VPS               | `docker compose up -d --build`    |
+| Kubernetes      | K8s cluster (GKE, EKS, AKS)          | `deploy/k8s/apply.sh`             |
+| AWS ECS         | AWS Fargate container service        | `deploy/scripts/deploy-aws.sh`    |
+| GCP Cloud Run   | Google Cloud Run                     | `deploy/scripts/deploy-gcp.sh`    |
+| Railway         | Railway PaaS (free tier available)   | `deploy/scripts/deploy-railway.sh`|
+| Render          | Render PaaS                          | `deploy/render.yaml`              |
 
 ---
 
-## 📄 License
+## Future Scope
+
+- **Email Notifications**: Send email alerts for application updates, new jobs
+- **File Upload to Cloud**: Resume/CV upload using AWS S3 or Azure Blob Storage
+- **Real-time Chat**: Messaging between candidates and recruiters
+- **Video Interview**: Integrated video interview scheduling
+- **Assessment Engine**: Online teaching aptitude tests
+- **AI Resume Parsing**: Extract skills and experience from uploaded resumes
+- **Advanced Analytics**: ML-powered insights, hiring predictions
+- **Multi-language Support**: i18n for Hindi, English, and regional languages
+- **Mobile App**: React Native companion app
+- **Payment Gateway**: Premium job listings, featured posts
+- **Notification System**: In-app + email + SMS notifications
+- **Audit Logging**: Track all user activities for compliance
+- **CI/CD Pipeline**: GitHub Actions for automated testing and deployment
+- **OAuth2.0 Social Login**: Google, LinkedIn authentication
+
+---
+
+## License
 
 This project is for educational and demonstration purposes.
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - Spring Boot Team for the amazing framework
 - React & Vite communities for frontend tools
