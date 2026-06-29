@@ -1,0 +1,33 @@
+# Maven build output
+target/
+*.jar
+*.war
+*.ear
+
+# Maven wrapper (if generated locally)
+.mvn/
+
+# Environment
+.env
+.env.local
+application-local.yml
+application-dev.yml
+application-secret.yml
+
+# IDE & editors
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Spring Boot DevTools (restart trigger file)
+restart.txt
+
+# OS metadata
+Thumbs.db

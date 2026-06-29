@@ -1,0 +1,70 @@
+@import './theme/theme.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+    font-family: var(--font-sans);
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 text-white px-4 py-2 rounded-[0.875rem] hover:bg-primary-700 transition-colors duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-foreground px-4 py-2 rounded-[0.875rem] hover:bg-secondary/80 transition-colors duration-200 font-medium;
+  }
+
+  .btn-danger {
+    @apply bg-destructive text-destructive-foreground px-4 py-2 rounded-[0.875rem] hover:bg-destructive/90 transition-colors duration-200 font-medium;
+  }
+
+  .btn-outline {
+    @apply border border-primary-600 text-primary-600 px-4 py-2 rounded-[0.875rem] hover:bg-primary-50 transition-colors duration-200 font-medium;
+  }
+
+  .input-field {
+    @apply w-full px-3 py-2 border border-input rounded-[0.875rem] focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all duration-200 bg-card text-foreground;
+  }
+
+  .card {
+    @apply bg-card rounded-xl shadow-sm border border-border p-6;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+
+  .badge-success {
+    @apply badge bg-accent/20 text-accent-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-chart-3/20 text-yellow-800;
+  }
+
+  .badge-danger {
+    @apply badge bg-destructive/20 text-destructive;
+  }
+
+  .badge-info {
+    @apply badge bg-primary/20 text-primary-700;
+  }
+
+  .badge-secondary {
+    @apply badge bg-muted text-muted-foreground;
+  }
+
+  .sidebar-link {
+    @apply flex items-center gap-3 px-4 py-3 rounded-[0.875rem] transition-colors duration-200 text-muted-foreground hover:bg-primary-50 hover:text-primary-700;
+  }
+
+  .sidebar-link.active {
+    @apply bg-primary-50 text-primary-700 font-medium;
+  }
+}

@@ -1,0 +1,67 @@
+/* ============================================================
+   Shikshak Recruitment — Design Token System (shadcn/ui style)
+   Source: https://edu-jobs-portal-1.preview.emergentagent.com/
+   ============================================================ */
+
+:root {
+  /* ---- Colors (HSL) ---- */
+
+  /* Backgrounds & Surfaces */
+  --background: 39 38% 96%;          /* warm beige page bg */
+  --foreground: 24 22% 14%;          /* near-black text */
+  --card: 36 35% 99%;                /* card surface */
+  --card-foreground: 24 22% 14%;
+  --popover: 36 35% 99%;
+  --popover-foreground: 24 22% 14%;
+
+  /* Primary — warm terracotta / orange */
+  --primary: 15 65% 45%;
+  --primary-foreground: 39 38% 97%;
+
+  /* Secondary — warm grey */
+  --secondary: 34 30% 90%;
+  --secondary-foreground: 24 22% 14%;
+
+  /* Muted */
+  --muted: 34 25% 92%;
+  --muted-foreground: 24 12% 38%;
+
+  /* Accent — teal / verdigris */
+  --accent: 168 35% 35%;
+  --accent-foreground: 39 38% 97%;
+
+  /* Destructive */
+  --destructive: 0 72% 45%;
+  --destructive-foreground: 39 38% 97%;
+
+  /* Borders & Inputs */
+  --border: 30 20% 84%;
+  --input: 30 20% 88%;
+  --ring: 15 65% 45%;
+
+  /* Border Radius */
+  --radius: 0.875rem;
+
+  /* ---- Charts ---- */
+  --chart-1: 15 65% 45%;
+  --chart-2: 168 35% 35%;
+  --chart-3: 35 80% 55%;
+  --chart-4: 24 30% 28%;
+  --chart-5: 50 60% 60%;
+
+  /* ---- Fonts ---- */
+  --font-sans: 'Work Sans', system-ui, sans-serif;
+  --font-display: 'Outfit', system-ui, sans-serif;
+  --font-serif-display: 'Fraunces', Georgia, serif;
+
+  /* ---- Spacing Scale (optional overrides) ---- */
+
+  /* ---- Shadows (tailwind defaults extended) ---- */
+}
+
+/* Utility: apply bg & text colour to body */
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+}
