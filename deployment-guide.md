@@ -120,6 +120,8 @@ To enable email notifications (password reset, application updates, etc.):
 
 Best for: Single VPS (DigitalOcean, Linode, AWS EC2, Hetzner)
 
+The project uses a single unified Docker image that contains both the frontend (Nginx) and backend (Spring Boot). Docker Compose orchestrates this image alongside the PostgreSQL database.
+
 #### Step 1: Clone the Repository
 
 ```bash
@@ -150,15 +152,14 @@ EOF
 #### Step 3: Deploy
 
 ```bash
-# Pull latest images and start
+# Build the unified image and start
 docker compose up -d --build
 
 # Check that services are running
 docker compose ps
 
 # View logs
-docker compose logs -f backend
-docker compose logs -f frontend
+docker compose logs -f app
 ```
 
 #### Step 4: Set up Reverse Proxy (SSL)
@@ -175,10 +176,6 @@ sudo apt install caddy
 cat > /etc/caddy/Caddyfile << EOF
 shikshak.abnjain.me {
     reverse_proxy localhost:80
-}
-
-api.shikshak.abnjain.me {
-    reverse_proxy localhost:8080
 }
 EOF
 
@@ -198,14 +195,6 @@ server {
 
     location / {
         proxy_pass http://localhost:80;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    location /api/ {
-        proxy_pass http://localhost:8080;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -264,16 +253,14 @@ Edit `deploy/k8s/06-ingress.yaml`:
 #### Step 4: Build and Push Images
 
 ```bash
-# Build images
-docker build -t ghcr.io/abnjain/shikshak-recruitment-backend:latest ./backend
-docker build -t ghcr.io/abnjain/shikshak-recruitment-frontend:latest ./frontend
+# Build the unified image (frontend + backend together)
+docker build -t ghcr.io/abnjain/shikshak-recruitment:latest .
 
 # Push to your container registry (GitHub Container Registry example)
-docker push ghcr.io/abnjain/shikshak-recruitment-backend:latest
-docker push ghcr.io/abnjain/shikshak-recruitment-frontend:latest
+docker push ghcr.io/abnjain/shikshak-recruitment:latest
 ```
 
-Update the image references in `04-backend.yaml` and `05-frontend.yaml` to match your registry.
+Update the image reference in `04-backend.yaml` to match your registry. The frontend service (`05-frontend.yaml`) is no longer needed -- the unified image serves both.
 
 #### Step 5: Apply Manifests
 
@@ -513,11 +500,11 @@ Refer to `deploy/railway.json` for the Railway configuration.
 
 ---
 
-### 6. Render (PaaS)
+### 6. Render (PaaS) -- Unified Single-Container Deployment
 
 Best for: Simple deployments with built-in PostgreSQL
 
-This is the recommended method for quickly deploying Shikshak Recruitment to production. Render handles PostgreSQL provisioning, SSL certificates, and CI/CD automatically.
+This is the recommended method for quickly deploying Shikshak Recruitment to production. Render handles PostgreSQL provisioning, SSL certificates, and CI/CD automatically. The project uses a **unified single-container strategy** -- both the React frontend (served by Nginx) and the Spring Boot backend run together in one Docker container, eliminating cross-service networking issues.
 
 #### Prerequisites
 
@@ -531,36 +518,27 @@ This is the recommended method for quickly deploying Shikshak Recruitment to pro
 # Generate a JWT secret
 JWT_SECRET=$(openssl rand -base64 32)
 echo "JWT_SECRET=$JWT_SECRET"
-
-# Generate a strong DB password
-DB_PASSWORD="$(openssl rand -base64 16 | tr -dc 'a-zA-Z0-9' | head -c 20)"
-echo "DB_PASSWORD=$DB_PASSWORD"
 ```
 
-Save both values -- you will need them in Step 4.
+Save this value -- you will need it in Step 4.
 
 #### Step 2: Prepare the render.yaml File
 
-The blueprint file is at `deploy/render.yaml`. It is pre-configured to:
+The blueprint file is at `deploy/render.yaml`. It is pre-configured with a **single web service** (`shikshak`) that:
 
-- Build the **backend** (`shikshak-backend`) from `./backend/Dockerfile`
-- Build the **frontend** (`shikshak-frontend`) from `./frontend/Dockerfile`
-- Provision a **PostgreSQL database** (`shikshak-db`)
-- Auto-link the database credentials to the backend via `fromDatabase` references
-- Auto-link the backend URL to the frontend via `fromService` references
+- Builds from the **root Dockerfile** (multi-stage: builds frontend with Node, backend with Maven, then produces a single Nginx+JRE runtime image)
+- Serves the frontend at `/` and proxies `/api/` to the Spring Boot backend on `localhost:8080` (same container)
+- Provisions a **PostgreSQL database** (`shikshak-db`)
+- Auto-links database credentials via `fromDatabase` references
 
-**No changes are needed to `render.yaml` for a basic deployment.** The file is already committed to your repository.
+**No changes are needed to `render.yaml` for a basic deployment.**
 
-If you are deploying from a branch other than `main`, add `branch: <your-branch>` under both services and the database:
+If you are deploying from a branch other than `main`, add `branch: <your-branch>` under the service and database:
 
 ```yaml
 services:
   - type: web
-    name: shikshak-backend
-    branch: main          # <-- change to your branch
-    ...
-  - type: web
-    name: shikshak-frontend
+    name: shikshak
     branch: main          # <-- change to your branch
     ...
 databases:
@@ -576,8 +554,7 @@ databases:
 3. If prompted, connect your GitHub account and grant Render access to your repository
 4. Select your `abnjain/shikshak-recruitment` repository
 5. Render will automatically read `deploy/render.yaml` and display:
-   - **shikshak-backend** (Web Service, Docker)
-   - **shikshak-frontend** (Web Service, Docker)
+   - **shikshak** (Web Service, Docker)
    - **shikshak-db** (PostgreSQL database)
 6. Click **Apply** at the bottom
 
@@ -585,70 +562,74 @@ databases:
 
 After clicking Apply, Render will prompt you for environment variables marked as `sync: false`.
 
-1. For the **backend service**, set these values:
+Set these values for the **shikshak** service:
 
-   | Variable           | Value                                  | Required? |
-   |--------------------|----------------------------------------|-----------|
-   | `JWT_SECRET`       | Your generated JWT secret              | Yes       |
-   | `GOOGLE_CLIENT_ID` | Your Google OAuth client ID            | No        |
-   | `MAIL_USERNAME`    | your-email@gmail.com                   | No        |
-   | `MAIL_PASSWORD`    | Your Gmail app password                | No        |
+| Variable           | Value                                  | Required? |
+|--------------------|----------------------------------------|-----------|
+| `JWT_SECRET`       | Your generated JWT secret              | Yes       |
+| `GOOGLE_CLIENT_ID` | Your Google OAuth client ID            | No        |
+| `MAIL_USERNAME`    | your-email@gmail.com                   | No        |
+| `MAIL_PASSWORD`    | Your Gmail app password                | No        |
 
-2. For the **frontend service**, no additional variables are needed -- it will automatically receive `BACKEND_URL` from the backend service.
-
-3. The **database** credentials will be auto-generated and injected into the backend.
+The database credentials (host, port, database name, user, password) are auto-injected by Render from the `shikshak-db` database.
 
 #### Step 5: Deploy
 
 1. Review the configuration summary and click **Apply**
 2. Render will now:
    - Provision a PostgreSQL 16 database (free tier: `plan: free`, 256MB RAM, 1GB disk)
-   - Build the backend Docker image (this takes 3-5 minutes on first deploy)
-   - Build the frontend Docker image
-   - Deploy both services and run health checks
-3. You can monitor progress in the Render Dashboard under the **Events** tab for each service
+   - Build the unified Docker image from the root Dockerfile (this takes 5-7 minutes on first deploy as it compiles both frontend and backend)
+   - Deploy the single service and run health checks
+3. You can monitor progress in the Render Dashboard under the **Events** tab
 
 #### Step 6: Access Your Application
 
-Once both services show **Live** status:
+Once the service shows **Live** status:
 
 ```bash
-# Backend API (check if it responds)
-curl https://shikshak-backend.onrender.com/api/v1/public/jobs
+# Health check (also used by Render)
+curl https://shikshak.onrender.com/api/v1/public/jobs
 
-# Frontend website
-# Open https://shikshak-frontend.onrender.com in your browser
+# Open the frontend in a browser
+# https://shikshak.onrender.com
 ```
 
-> Note: Render assigns a subdomain like `shikshak-backend.onrender.com` and `shikshak-frontend.onrender.com` by default. You can add a custom domain in the Render dashboard later.
+> Render assigns a subdomain like `shikshak.onrender.com` by default. The frontend is served at the root (`/`) and the API is at `/api/v1/` on the **same domain**. You can add a custom domain in the Render dashboard later.
 
 #### Step 7: Verify the Deployment
 
 Run these checks:
 
 ```bash
-# 1. Check backend health
-curl -I https://shikshak-backend.onrender.com/api/v1/public/jobs
+# 1. Check API health (served from single container)
+curl -I https://shikshak.onrender.com/api/v1/public/jobs
 # Expected: HTTP/2 200
 
 # 2. Login as admin
-curl -X POST https://shikshak-backend.onrender.com/api/v1/auth/login \
+curl -X POST https://shikshak.onrender.com/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"usernameOrEmail":"admin","password":"admin123"}'
 # Expected: JSON response with token and user data
 
-# 3. Check frontend loads
-curl -I https://shikshak-frontend.onrender.com/health
-# Expected: 200 OK
+# 3. Check frontend loads (served by Nginx in same container)
+curl -I https://shikshak.onrender.com/
+# Expected: 200 OK (serves index.html)
 ```
 
-#### Setting Up a Custom Domain (Optional)
+#### Setting Up a Custom Domain
 
-1. In the Render Dashboard, go to your **frontend service** > **Settings** > **Custom Domain**
+Since everything runs on a **single service**, you only need **one domain**:
+
+1. In the Render Dashboard, go to your **shikshak** service > **Settings** > **Custom Domain**
 2. Enter your domain (e.g., `shikshak.abnjain.me`)
 3. Add the DNS CNAME record provided by Render to your domain registrar
 4. Render will automatically provision an SSL certificate (Let's Encrypt)
-5. Repeat for the backend service if needed (e.g., `api.shikshak.abnjain.me`)
+
+Your application will be accessible at:
+- **Frontend**: `https://shikshak.abnjain.me/`
+- **API (backend)**: `https://shikshak.abnjain.me/api/v1/`
+
+No additional services or subdomains needed.
 
 #### Auto-Deploy on Git Push
 
@@ -667,11 +648,12 @@ You can find the service ID and API key in the Render Dashboard under **Account 
 
 #### Render-Specific Notes
 
-- **Free tier limits**: The free PostgreSQL database has 256MB RAM and 1GB storage. It will suspend after 15 minutes of inactivity. The web services also spin down after inactivity. Consider upgrading to a paid plan for production.
+- **Free tier limits**: The free PostgreSQL database has 256MB RAM and 1GB storage. It will suspend after 15 minutes of inactivity. The web service also spins down after inactivity. Consider upgrading to a paid plan for production.
 - **No persistent disk**: File uploads are stored on the ephemeral container filesystem. They will be lost on restart. For production, configure cloud storage (S3, GCS) for uploads.
-- **Health checks**: The backend uses `/api/v1/public/jobs` as the health check path. The frontend uses `/health`. These must return a 200 status for the services to stay live.
-- **Logs**: View logs in the Render Dashboard under each service's **Logs** tab.
+- **Health check**: The service uses `/api/v1/public/jobs` as the health check path. This must return a 200 status for the service to stay live.
+- **Logs**: View logs in the Render Dashboard under the **Logs** tab. Both Nginx and Spring Boot logs appear in the same stream.
 - **Environment variables**: Changes to env vars trigger an automatic redeploy on Render.
+- **Build time**: The unified Docker image compiles both frontend (Node/npm) and backend (Maven/Java) in a single multi-stage build. First deploy takes 5-7 minutes. Subsequent builds with Docker layer caching are faster.
 
 ---
 

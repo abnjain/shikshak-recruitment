@@ -20,19 +20,21 @@ services:
       timeout: 5s
       retries: 5
 
-  # ===== Backend (Spring Boot) =====
-  backend:
+  # ===== Unified App (Backend + Frontend in one container) =====
+  app:
     build:
-      context: ./backend
+      context: .
       dockerfile: Dockerfile
-    container_name: shikshak-backend
+    container_name: shikshak-app
     restart: unless-stopped
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/shikshak_recruitment
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: shikshak_recruitment
       SPRING_DATASOURCE_USERNAME: ${DB_USER:-postgres}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-postgres}
       JWT_SECRET: ${JWT_SECRET}
@@ -40,24 +42,11 @@ services:
       MAIL_USERNAME: ${MAIL_USERNAME:-}
       MAIL_PASSWORD: ${MAIL_PASSWORD:-}
     ports:
+      - "80:80"
       - "8080:8080"
     volumes:
-      - backend_uploads:/app/uploads
-
-  # ===== Frontend (Nginx) =====
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: shikshak-frontend
-    restart: unless-stopped
-    depends_on:
-      - backend
-    environment:
-      BACKEND_URL: http://backend:8080
-    ports:
-      - "80:80"
+      - app_uploads:/app/uploads
 
 volumes:
   postgres_data:
-  backend_uploads:
+  app_uploads:

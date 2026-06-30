@@ -1,11 +1,11 @@
 services:
-  # Backend API
+  # Single unified service (frontend + backend in one container)
   - type: web
-    name: shikshak-backend
+    name: shikshak
     env: docker
     repo: https://github.com/abnjain/shikshak-recruitment
-    dockerfilePath: ./backend/Dockerfile
-    dockerContext: ./backend
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     healthCheckPath: /api/v1/public/jobs
     envVars:
       - key: SERVER_PORT
@@ -38,21 +38,6 @@ services:
         sync: false
       - key: MAIL_PASSWORD
         sync: false
-
-  # Frontend SPA
-  - type: web
-    name: shikshak-frontend
-    env: docker
-    repo: https://github.com/abnjain/shikshak-recruitment
-    dockerfilePath: ./frontend/Dockerfile
-    dockerContext: ./frontend
-    healthCheckPath: /health
-    envVars:
-      - key: BACKEND_URL
-        fromService:
-          type: web
-          name: shikshak-backend
-          property: url
 
 databases:
   - name: shikshak-db
